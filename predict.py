@@ -29,15 +29,16 @@ class Predict(object):
         model.load_weights("weights/weight_%s.h5"%coin[self.SYMBOL])
         return model
 
-    def save_to_db(self, inv_yhat, inv_y, id_coin):
+    def save_to_db(self, yhat, inv_yhat, inv_y, id_coin):
         time_create = int(time.time())
         price_predict = array2string(inv_yhat, separator=',')
         price_actual = array2string(inv_y, separator=',')
+        list_price_predict = array2string(yhat, separator=',')
         price_preidct_last = inv_yhat[-1]
         price_predict_previous = inv_yhat[-2]
         price_actual_last = inv_y[-1]
         price_actual_previous = inv_y[-2]
-        self.db.insert_historical_predictions_multi_step(id_coin, time_create, price_actual, price_predict, 
+        self.db.insert_historical_predictions_multi_step(id_coin, time_create, price_actual, price_predict, list_price_predict
             price_preidct_last, price_predict_previous, price_actual_last, price_actual_previous)
 
     def normalize_data(self, dataset, n_time_predicts=1, n_features=1, dropnan=True):
@@ -58,8 +59,8 @@ class Predict(object):
         test_X = self.normalize_data(dataset, n_time_predicts=n_time_predicts, n_features=n_features)
         model = self.load_model()
         yhat = self.make_predict(model, test_X, n_features=n_features)
-        yhat = concatenate((yhat[:,0], yhat[-1:,1:]),axis=None)
-        self.save_to_db(yhat, inv_y, coin[self.ID_COIN])
+        inv_yhat = concatenate((yhat[:,0], yhat[-1:,1:]),axis=None)
+        self.save_to_db(yhat, inv_yhat, inv_y, coin[self.ID_COIN])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Forecast coin price with deep learning.")

@@ -30,7 +30,7 @@ class trainModel(object):
         n_vars = 1 if type(data) is list else data.shape[1]
         df = DataFrame(data)
         df_drop = DataFrame(data)
-        df_drop.drop(df_drop.columns[[1,2,3,4,5,6,7,8,9]], axis=1, inplace=True)
+        df_drop.drop(df_drop.columns[range(1, n_vars)], axis=1, inplace=True)
         cols, names = list(), list()
         for i in range(0, n_in):
             cols.append(df.shift(i))
@@ -52,7 +52,7 @@ class trainModel(object):
         model = Sequential()
         model.add(LSTM(units,input_shape=(train_X.shape[1], train_X.shape[2]), return_sequences=True))
         model.add(LSTM(units))
-        model.add(Dense(3))
+        model.add(Dense(self.n_hours))
         model.compile(loss=loss, optimizer=optimizer)
         return model
 
@@ -107,14 +107,15 @@ class trainModel(object):
         with open("models/model_%s.json"%symbol, "w") as json_file:
             json_file.write(model_json)
 
-    def save_to_db(self, inv_y, yhat, id_coin):
+    def save_to_db(self, inv_y, yhat, inv_yhat, id_coin):
         max_openTime = self.db.get_max_open_time(id_coin)
-        max_error, RMSE = self.evaluate_model(inv_y, yhat)
+        max_error, RMSE = self.evaluate_model(inv_y, inv_yhat)
         openTime_last = max_openTime - self.n_time_predicts * 60 * 60 * 1000
         time_create = int(time.time())
-        price_predict = array2string(yhat, separator=',')
+        price_predict = array2string(inv_yhat, separator=',')
         price_test = array2string(inv_y, separator=',')
-        self.db.insert_history_train_multi_step(id_coin, time_create, price_test, price_predict, RMSE, max_error, openTime_last)
+        list_price_predict = array2string(yhat, separator=',')
+        self.db.insert_history_train_multi_step(id_coin, time_create, price_test, price_predict, list_price_predict, RMSE, max_error, openTime_last)
 
     def train_model(self):
         dataset = self.db.get_data_train_by_id(coin[self.ID_COIN])
@@ -127,10 +128,10 @@ class trainModel(object):
         model = self.fit_model(model, train_X, train_y, test_X, test_y, coin[self.SYMBOL], self.config_train)
         self.save_model(model, coin[self.SYMBOL])
         yhat = self.make_predict(model, test_X, n_features)
-        yhat = concatenate((yhat[:,0], yhat[-1:,1:]),axis=None)
+        inv_yhat = concatenate((yhat[:,0], yhat[-1:,1:]),axis=None)
         test_y = concatenate((test_y[:,0], test_y[-1:,1:]),axis=None)
-        self.save_to_db(test_y, yhat, coin[self.ID_COIN])
-        self.save_img_predict_test(test_y, yhat, coin[self.SYMBOL])
+        self.save_to_db(test_y, yhat, inv_yhat, coin[self.ID_COIN])
+        self.save_img_predict_test(test_y, inv_yhat, coin[self.SYMBOL])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Predict coin price.")

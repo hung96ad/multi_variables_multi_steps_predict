@@ -166,11 +166,11 @@ class ConnectDB(object):
         del cnx
         return None
 
-    def insert_history_train_multi_step(self, id_coin, time_create, price_test, price_predict, RMSE, max_error, openTime_last):
+    def insert_history_train_multi_step(self, id_coin, time_create, price_test, price_predict, list_price_predict, RMSE, max_error, openTime_last):
         cnx = config_db()
         cursor = cnx.cursor()
-        query_string = "INSERT INTO historical_train_multi_step(id_coin, time_create, price_test, price_predict, RMSE, max_error, openTime_last)\
-            VALUES(%s,%s,'%s','%s',%s,%s,%s)"%(id_coin, time_create, price_test, price_predict, RMSE, max_error, openTime_last)
+        query_string = "INSERT INTO historical_train_multi_step(id_coin, time_create, price_test, price_predict, list_price_predict, RMSE, max_error, openTime_last)\
+            VALUES(%s,%s,'%s','%s','%s',%s,%s,%s)"%(id_coin, time_create, price_test, price_predict, list_price_predict, RMSE, max_error, openTime_last)
         try:
             cursor.execute(query_string)
             cnx.commit()
@@ -183,13 +183,13 @@ class ConnectDB(object):
         del cnx
         return None
 
-    def insert_historical_predictions_multi_step(self, id_coin, time_create, price_actual, price_predict,
+    def insert_historical_predictions_multi_step(self, id_coin, time_create, price_actual, price_predict, list_price_predict,
             price_preidct_last, price_predict_previous, price_actual_last, price_actual_previous):
         cnx = config_db()
         cursor = cnx.cursor()
-        query_string = "INSERT INTO historical_predictions_multi_step(id_coin, time_create, price_actual, price_predict, \
+        query_string = "INSERT INTO historical_predictions_multi_step(id_coin, time_create, price_actual, price_predict, list_price_predict, \
                 price_preidct_last, price_predict_previous, price_actual_last, price_actual_previous)\
-            VALUES (%s,%s,'%s','%s',%s,%s,%s,%s)"%(id_coin, time_create, price_actual, price_predict,
+            VALUES (%s,%s,'%s','%s','%s',%s,%s,%s,%s)"%(id_coin, time_create, price_actual, price_predict, list_price_predict,
                 price_preidct_last, price_predict_previous, price_actual_last, price_actual_previous)
         try:
             cursor.execute(query_string)
